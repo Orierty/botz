@@ -370,7 +370,48 @@ class BlockGenerator {
 
     static generateNotificationBlock(blockData) {
         const header = this.generateBlockHeader('Уведомления', 'NOTIFY', blockData.id);
-        return header + this.generateFormGroup('Кому отправить:', `<select><option>Администратору</option></select>`);
+        
+        const targetGroup = this.generateFormGroup(
+            'Кому отправить:',
+            `<select onchange="updateBlockData('${blockData.id}', 'target', this.value); toggleNotificationFields('${blockData.id}')">
+                <option value="admin" ${blockData.target === 'admin' || !blockData.target ? 'selected' : ''}>Администратору</option>
+                <option value="custom" ${blockData.target === 'custom' ? 'selected' : ''}>Указать Chat ID</option>
+            </select>`
+        );
+        
+        const adminChatIdGroup = this.generateFormGroup(
+            'Admin Chat ID (можно использовать переменные):',
+            `<input type="text" 
+                id="${blockData.id}_admin_chat_id" 
+                placeholder="123456789 или {admin_id}" 
+                onchange="updateBlockData('${blockData.id}', 'admin_chat_id', this.value)" 
+                oninput="updateBlockData('${blockData.id}', 'admin_chat_id', this.value)" 
+                value="${blockData.admin_chat_id || ''}"
+                style="display: ${blockData.target === 'custom' ? 'none' : 'block'}">
+            <small style="color: #666;">Получить ID можно у @userinfobot</small>`
+        );
+        
+        const customChatIdGroup = this.generateFormGroup(
+            'Переменная с Chat ID:',
+            `<input type="text" 
+                id="${blockData.id}_chat_id" 
+                placeholder="user_chat_id" 
+                onchange="updateBlockData('${blockData.id}', 'chat_id', this.value)" 
+                oninput="updateBlockData('${blockData.id}', 'chat_id', this.value)" 
+                value="${blockData.chat_id || ''}"
+                style="display: ${blockData.target === 'custom' ? 'block' : 'none'}">
+            <small style="color: #666;">Название переменной, где хранится chat_id</small>`
+        );
+        
+        const messageGroup = this.generateFormGroup(
+            'Текст уведомления (можно использовать переменные):',
+            `<textarea 
+                placeholder="🔔 Новый заказ от {customer_name}" 
+                onchange="updateBlockData('${blockData.id}', 'message', this.value)" 
+                oninput="updateBlockData('${blockData.id}', 'message', this.value)">${blockData.message || ''}</textarea>`
+        );
+        
+        return header + targetGroup + adminChatIdGroup + customChatIdGroup + messageGroup;
     }
 
     static generateOrderConfirmBlock(blockData) {

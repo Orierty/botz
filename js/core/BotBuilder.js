@@ -71,6 +71,7 @@ class BotBuilder {
         window.deleteBlock = (blockId) => this.deleteBlock(blockId);
         window.selectBlock = (blockId) => this.selectBlock(blockId);
         window.updateBlockData = (blockId, field, value) => this.updateBlockData(blockId, field, value);
+        window.toggleNotificationFields = (blockId) => this.toggleNotificationFields(blockId);
         window.clearCanvas = () => this.clearCanvas();
         window.hideEmptyMessage = () => this.canvasManager.hideEmptyMessage();
         window.showEmptyMessage = () => this.canvasManager.showEmptyMessage();
@@ -239,6 +240,12 @@ class BotBuilder {
                 blockData.temperature = 0.7;
                 blockData.result_variable = 'gpt_response';
                 break;
+            case 'notification':
+                blockData.target = 'admin';
+                blockData.chat_id = '';
+                blockData.admin_chat_id = '';
+                blockData.message = '';
+                break;
         }
     }
 
@@ -335,6 +342,23 @@ class BotBuilder {
         
         // Обновляем хеш
         this.updateHashInRealTime();
+    }
+
+    // Переключение полей уведомления
+    toggleNotificationFields(blockId) {
+        const block = this.blocks[blockId];
+        if (!block || block.type !== 'notification') return;
+        
+        const adminChatIdField = document.getElementById(`${blockId}_admin_chat_id`);
+        const customChatIdField = document.getElementById(`${blockId}_chat_id`);
+        
+        if (block.target === 'admin') {
+            if (adminChatIdField) adminChatIdField.style.display = 'block';
+            if (customChatIdField) customChatIdField.style.display = 'none';
+        } else {
+            if (adminChatIdField) adminChatIdField.style.display = 'none';
+            if (customChatIdField) customChatIdField.style.display = 'block';
+        }
     }
 
     // Очистка canvas

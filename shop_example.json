@@ -303,6 +303,7 @@
       "y": 400,
       "target": "admin",
       "chat_id": "",
+      "admin_chat_id": "",
       "message": "🔔 НОВЫЙ ЗАКАЗ!\n\n👤 {customer_name}\n📞 {customer_phone}\n📍 {customer_address}\n\n💰 Сумма: {total_amount} руб",
       "connections": {
         "input": "block_17",

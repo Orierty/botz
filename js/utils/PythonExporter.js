@@ -555,18 +555,29 @@ if __name__ == "__main__":
         elif block_type == 'notification':
             target = block.get('target', 'admin')
             chat_id_var = block.get('chat_id', '')
+            admin_chat_id_var = block.get('admin_chat_id', '')
             message_text = substitute_variables(block.get('message', ''), user_data[chat_id])
             
             if target == 'admin':
-                # В реальном боте укажите ADMIN_CHAT_ID
-                logger.warning(f"[ADMIN NOTIFICATION] {message_text}")
-                # admin_chat_id = 123456789  # Укажите ID администратора
-                # await bot.send_message(admin_chat_id, message_text)
+                # Получаем admin_chat_id из блока (может быть числом или переменной)
+                admin_id = substitute_variables(admin_chat_id_var, user_data[chat_id]) if admin_chat_id_var else ''
+                
+                if admin_id:
+                    try:
+                        await bot.send_message(int(admin_id), message_text)
+                        logger.info(f"Уведомление отправлено администратору {admin_id}")
+                    except Exception as e:
+                        logger.error(f"Ошибка отправки уведомления администратору: {e}")
+                else:
+                    logger.warning(f"[ADMIN NOTIFICATION] {message_text}")
+                    logger.warning("⚠️ ADMIN_CHAT_ID не указан в блоке notification")
+                    
             elif target == 'custom' and chat_id_var:
                 target_chat_id = user_data[chat_id].get(chat_id_var, '')
                 if target_chat_id:
                     try:
                         await bot.send_message(int(target_chat_id), message_text)
+                        logger.info(f"Уведомление отправлено пользователю {target_chat_id}")
                     except Exception as e:
                         logger.error(f"Ошибка отправки уведомления: {e}")
             
@@ -920,6 +931,7 @@ ${callbackHandlers}`;
                 case 'notification':
                     blockData['target'] = block.target || 'admin';
                     blockData['chat_id'] = block.chat_id || '';
+                    blockData['admin_chat_id'] = block.admin_chat_id || '';
                     blockData['message'] = block.message || '';
                     break;
                 case 'order_confirm':
