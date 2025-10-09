@@ -1,0 +1,485 @@
+{
+  "blocks": {
+    "block_1": {
+      "id": "block_1",
+      "type": "start",
+      "x": 50,
+      "y": 100,
+      "message": "🛍️ Добро пожаловать в наш интернет-магазин!\n\n📱 У нас вы найдете:\n• Электронику\n• Аксессуары\n• Гаджеты\n\nВсе товары с гарантией и быстрой доставкой!",
+      "connections": {
+        "input": null,
+        "outputs": {
+          "default": "block_2"
+        }
+      }
+    },
+    "block_2": {
+      "id": "block_2",
+      "type": "catalog",
+      "x": 350,
+      "y": 100,
+      "source": "json",
+      "products": "[{\"name\":\"iPhone 15 Pro\",\"price\":\"99990\",\"description\":\"Титановый корпус, A17 Pro, камера 48 МП\"},{\"name\":\"Samsung Galaxy S24\",\"price\":\"89990\",\"description\":\"Snapdragon 8 Gen 3, AMOLED дисплей\"},{\"name\":\"AirPods Pro 2\",\"price\":\"24990\",\"description\":\"Активное шумоподавление, USB-C\"},{\"name\":\"Xiaomi Watch S2\",\"price\":\"19990\",\"description\":\"AMOLED дисплей, 12 дней работы\"},{\"name\":\"Logitech MX Master 3S\",\"price\":\"9990\",\"description\":\"Беспроводная мышь для профи\"},{\"name\":\"JBL Flip 6\",\"price\":\"12990\",\"description\":\"Портативная колонка, IP67, 12 часов\"}]",
+      "per_page": 8,
+      "connections": {
+        "input": "block_1",
+        "outputs": {
+          "default": "block_3"
+        }
+      }
+    },
+    "block_3": {
+      "id": "block_3",
+      "type": "message",
+      "x": 650,
+      "y": 100,
+      "text": "📦 Вы выбрали: {product_name}\n💰 Цена: {product_price} руб\n📝 {product_description}\n\n✨ Отличный выбор!",
+      "connections": {
+        "input": "block_2",
+        "outputs": {
+          "default": "block_4"
+        }
+      }
+    },
+    "block_4": {
+      "id": "block_4",
+      "type": "inline_keyboard",
+      "x": 950,
+      "y": 100,
+      "message": "Что хотите сделать?",
+      "buttons": [
+        {
+          "text": "🛒 Добавить в корзину",
+          "callback_data": "add_to_cart"
+        },
+        {
+          "text": "🔙 Вернуться к каталогу",
+          "callback_data": "back_to_catalog"
+        },
+        {
+          "text": "🛍️ Перейти к оформлению",
+          "callback_data": "go_to_checkout"
+        }
+      ],
+      "connections": {
+        "input": "block_3",
+        "outputs": {
+          "add_to_cart": "block_5",
+          "back_to_catalog": "block_2",
+          "go_to_checkout": "block_10"
+        }
+      }
+    },
+    "block_5": {
+      "id": "block_5",
+      "type": "question",
+      "x": 1250,
+      "y": 100,
+      "question": "🔢 Сколько единиц товара хотите купить?",
+      "variable": "quantity",
+      "connections": {
+        "input": "block_4",
+        "outputs": {
+          "default": "block_6"
+        }
+      }
+    },
+    "block_6": {
+      "id": "block_6",
+      "type": "cart",
+      "x": 1550,
+      "y": 100,
+      "action": "add",
+      "product_id": "product_name",
+      "quantity": "quantity",
+      "connections": {
+        "input": "block_5",
+        "outputs": {
+          "default": "block_7"
+        }
+      }
+    },
+    "block_7": {
+      "id": "block_7",
+      "type": "cart",
+      "x": 1850,
+      "y": 100,
+      "action": "show",
+      "product_id": "",
+      "quantity": "",
+      "connections": {
+        "input": "block_6",
+        "outputs": {
+          "default": "block_8"
+        }
+      }
+    },
+    "block_8": {
+      "id": "block_8",
+      "type": "inline_keyboard",
+      "x": 2150,
+      "y": 100,
+      "message": "Что дальше?",
+      "buttons": [
+        {
+          "text": "🛍️ Продолжить покупки",
+          "callback_data": "continue_shopping"
+        },
+        {
+          "text": "✅ Оформить заказ",
+          "callback_data": "checkout"
+        },
+        {
+          "text": "🗑️ Очистить корзину",
+          "callback_data": "clear_cart"
+        }
+      ],
+      "connections": {
+        "input": "block_7",
+        "outputs": {
+          "continue_shopping": "block_2",
+          "checkout": "block_10",
+          "clear_cart": "block_9"
+        }
+      }
+    },
+    "block_9": {
+      "id": "block_9",
+      "type": "cart",
+      "x": 2450,
+      "y": 300,
+      "action": "clear",
+      "product_id": "",
+      "quantity": "",
+      "connections": {
+        "input": "block_8",
+        "outputs": {
+          "default": "block_2"
+        }
+      }
+    },
+    "block_10": {
+      "id": "block_10",
+      "type": "message",
+      "x": 50,
+      "y": 400,
+      "text": "📝 Отлично! Давайте оформим ваш заказ.\n\nМне нужна информация для доставки.",
+      "connections": {
+        "input": "block_8",
+        "outputs": {
+          "default": "block_11"
+        }
+      }
+    },
+    "block_11": {
+      "id": "block_11",
+      "type": "order_form",
+      "x": 350,
+      "y": 400,
+      "fields": [
+        {
+          "type": "name",
+          "variable": "customer_name"
+        },
+        {
+          "type": "phone",
+          "variable": "customer_phone"
+        },
+        {
+          "type": "address",
+          "variable": "customer_address"
+        },
+        {
+          "type": "comment",
+          "variable": "customer_comment"
+        }
+      ],
+      "success_message": "✅ Спасибо! Ваши данные получены.",
+      "connections": {
+        "input": "block_12",
+        "outputs": {
+          "default": "block_12"
+        }
+      }
+    },
+    "block_12": {
+      "id": "block_12",
+      "type": "variable",
+      "x": 650,
+      "y": 400,
+      "variable": "delivery_cost",
+      "value": "500",
+      "connections": {
+        "input": "block_11",
+        "outputs": {
+          "default": "block_13"
+        }
+      }
+    },
+    "block_13": {
+      "id": "block_13",
+      "type": "variable",
+      "x": 950,
+      "y": 400,
+      "variable": "goods_total",
+      "value": "25000",
+      "connections": {
+        "input": "block_12",
+        "outputs": {
+          "default": "block_14"
+        }
+      }
+    },
+    "block_14": {
+      "id": "block_14",
+      "type": "calculation",
+      "x": 1250,
+      "y": 400,
+      "formula": "{goods_total} + {delivery_cost}",
+      "result_variable": "total_amount",
+      "connections": {
+        "input": "block_13",
+        "outputs": {
+          "default": "block_15"
+        }
+      }
+    },
+    "block_15": {
+      "id": "block_15",
+      "type": "order_confirm",
+      "x": 1550,
+      "y": 400,
+      "title": "📋 Подтверждение заказа",
+      "template": "👤 Имя: {customer_name}\n📞 Телефон: {customer_phone}\n📍 Адрес: {customer_address}\n💬 Комментарий: {customer_comment}\n\n💰 Стоимость товаров: {goods_total} руб\n🚚 Доставка: {delivery_cost} руб\n━━━━━━━━━━━━━━━━\n💳 ИТОГО: {total_amount} руб",
+      "show_confirm": true,
+      "show_edit": true,
+      "show_cancel": false,
+      "connections": {
+        "input": "block_14",
+        "outputs": {
+          "confirm_order": "block_16",
+          "edit_order": "block_11",
+          "cancel_order": null
+        }
+      }
+    },
+    "block_16": {
+      "id": "block_16",
+      "type": "payment",
+      "x": 1850,
+      "y": 400,
+      "title": "Оплата заказа",
+      "description": "Оплата товаров и доставки",
+      "amount": "total_amount",
+      "currency": "RUB",
+      "provider_token": "YOUR_PAYMENT_TOKEN",
+      "connections": {
+        "input": "block_15",
+        "outputs": {
+          "default": "block_17"
+        }
+      }
+    },
+    "block_17": {
+      "id": "block_17",
+      "type": "database",
+      "x": 2150,
+      "y": 400,
+      "operation": "save",
+      "key": "order_{customer_phone}_{timestamp}",
+      "data": "customer_name",
+      "result_variable": "",
+      "connections": {
+        "input": "block_16",
+        "outputs": {
+          "default": "block_18"
+        }
+      }
+    },
+    "block_18": {
+      "id": "block_18",
+      "type": "notification",
+      "x": 2450,
+      "y": 400,
+      "target": "admin",
+      "chat_id": "",
+      "message": "🔔 НОВЫЙ ЗАКАЗ!\n\n👤 {customer_name}\n📞 {customer_phone}\n📍 {customer_address}\n\n💰 Сумма: {total_amount} руб",
+      "connections": {
+        "input": "block_17",
+        "outputs": {
+          "default": "block_19"
+        }
+      }
+    },
+    "block_19": {
+      "id": "block_19",
+      "type": "message",
+      "x": 2750,
+      "y": 400,
+      "text": "🎉 Спасибо за заказ!\n\n✅ Ваш заказ №{customer_phone} принят в обработку\n\n📞 Мы свяжемся с вами в течение 30 минут\n🚚 Доставка: 1-2 рабочих дня\n\n💳 Оплата: {total_amount} руб\n\nДля новых покупок нажмите /start",
+      "connections": {
+        "input": "block_18",
+        "outputs": {
+          "default": null
+        }
+      }
+    }
+  },
+  "connections": [
+    {
+      "id": "conn_1",
+      "from": "block_1",
+      "to": "block_2",
+      "fromPort": "default"
+    },
+    {
+      "id": "conn_2",
+      "from": "block_2",
+      "to": "block_3",
+      "fromPort": "default"
+    },
+    {
+      "id": "conn_3",
+      "from": "block_3",
+      "to": "block_4",
+      "fromPort": "default"
+    },
+    {
+      "id": "conn_4",
+      "from": "block_4",
+      "to": "block_5",
+      "fromPort": "default"
+    },
+    {
+      "id": "conn_5",
+      "from": "block_5",
+      "to": "block_6",
+      "fromPort": "default"
+    },
+    {
+      "id": "conn_6",
+      "from": "block_6",
+      "to": "block_7",
+      "fromPort": "add_to_cart"
+    },
+    {
+      "id": "conn_7",
+      "from": "block_6",
+      "to": "block_2",
+      "fromPort": "back_to_catalog"
+    },
+    {
+      "id": "conn_8",
+      "from": "block_6",
+      "to": "block_12",
+      "fromPort": "go_to_checkout"
+    },
+    {
+      "id": "conn_9",
+      "from": "block_7",
+      "to": "block_8",
+      "fromPort": "default"
+    },
+    {
+      "id": "conn_10",
+      "from": "block_8",
+      "to": "block_9",
+      "fromPort": "default"
+    },
+    {
+      "id": "conn_11",
+      "from": "block_9",
+      "to": "block_10",
+      "fromPort": "default"
+    },
+    {
+      "id": "conn_12",
+      "from": "block_10",
+      "to": "block_2",
+      "fromPort": "continue_shopping"
+    },
+    {
+      "id": "conn_13",
+      "from": "block_10",
+      "to": "block_12",
+      "fromPort": "checkout"
+    },
+    {
+      "id": "conn_14",
+      "from": "block_10",
+      "to": "block_11",
+      "fromPort": "clear_cart"
+    },
+    {
+      "id": "conn_15",
+      "from": "block_11",
+      "to": "block_2",
+      "fromPort": "default"
+    },
+    {
+      "id": "conn_16",
+      "from": "block_12",
+      "to": "block_11",
+      "fromPort": "default"
+    },
+    {
+      "id": "conn_17",
+      "from": "block_11",
+      "to": "block_12",
+      "fromPort": "default"
+    },
+    {
+      "id": "conn_18",
+      "from": "block_12",
+      "to": "block_13",
+      "fromPort": "default"
+    },
+    {
+      "id": "conn_19",
+      "from": "block_13",
+      "to": "block_14",
+      "fromPort": "default"
+    },
+    {
+      "id": "conn_20",
+      "from": "block_14",
+      "to": "block_15",
+      "fromPort": "default"
+    },
+    {
+      "id": "conn_21",
+      "from": "block_15",
+      "to": "block_16",
+      "fromPort": "confirm_order"
+    },
+    {
+      "id": "conn_22",
+      "from": "block_15",
+      "to": "block_11",
+      "fromPort": "edit_order"
+    },
+    {
+      "id": "conn_23",
+      "from": "block_16",
+      "to": "block_17",
+      "fromPort": "default"
+    },
+    {
+      "id": "conn_24",
+      "from": "block_17",
+      "to": "block_18",
+      "fromPort": "default"
+    },
+    {
+      "id": "conn_25",
+      "from": "block_18",
+      "to": "block_19",
+      "fromPort": "default"
+    }
+  ],
+  "blockCounter": 21,
+  "settings": {
+    "botName": "Интернет-магазин",
+    "botToken": ""
+  }
+}

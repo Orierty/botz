@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Конструктор ботов</title>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <div class="sidebar">
+        <div class="bot-info">
+            <h3 style="margin-bottom: 10px; color: #333;">Настройки бота</h3>
+            <input type="text" id="bot-name" placeholder="Название бота" value="МойБот">
+            <input type="text" id="bot-token" placeholder="Токен бота (необязательно)">
+        </div>
+
+        <h2>Блоки</h2>
+        
+        <div class="block-type" draggable="true" data-type="start">
+            🚀 Старт
+        </div>
+        
+        <div class="block-type" draggable="true" data-type="message">
+            💬 Сообщение
+        </div>
+        
+        <div class="block-type" draggable="true" data-type="question">
+            ❓ Вопрос
+        </div>
+        
+        <div class="block-type" draggable="true" data-type="choice">
+            🎯 Выбор
+        </div>
+        
+        <div class="block-type" draggable="true" data-type="condition">
+            🔀 Условие
+        </div>
+        
+        <div class="block-type" draggable="true" data-type="delay">
+            ⏰ Задержка
+        </div>
+        
+        <div class="block-type" draggable="true" data-type="variable">
+            📝 Переменная
+        </div>
+        
+        <div class="block-type" draggable="true" data-type="loop">
+            🔄 Цикл
+        </div>
+
+        <h3 style="margin-top: 20px; margin-bottom: 10px; color: #666; font-size: 16px;">E-commerce</h3>
+        
+        <div class="block-type" draggable="true" data-type="image">
+            📸 Изображение
+        </div>
+        
+        <div class="block-type" draggable="true" data-type="inline_keyboard">
+            ⌨️ Inline-клавиатура
+        </div>
+        
+        <div class="block-type" draggable="true" data-type="calculation">
+            🧮 Вычисления
+        </div>
+        
+        <div class="block-type" draggable="true" data-type="cart">
+            🛒 Корзина
+        </div>
+        
+        <div class="block-type" draggable="true" data-type="payment">
+            💳 Оплата
+        </div>
+        
+        <div class="block-type" draggable="true" data-type="database">
+            🗄️ База данных
+        </div>
+        
+        <div class="block-type" draggable="true" data-type="catalog">
+            📋 Каталог товаров
+        </div>
+        
+        <div class="block-type" draggable="true" data-type="order_form">
+            📝 Форма заказа
+        </div>
+        
+        <div class="block-type" draggable="true" data-type="notification">
+            🔔 Уведомления
+        </div>
+        
+        <div class="block-type" draggable="true" data-type="order_confirm">
+            ✅ Подтверждение заказа
+        </div>
+
+        <h3 style="margin-top: 20px; margin-bottom: 10px; color: #666; font-size: 16px;">Интеграции</h3>
+        
+        <div class="block-type" draggable="true" data-type="chatgpt">
+            🤖 ChatGPT
+        </div>
+    </div>
+
+    <div class="main-area">
+        <div class="toolbar">
+            <button class="btn" onclick="clearCanvas()">🗑️ Очистить</button>
+            <button class="btn btn-undo" onclick="historyManager.undo()" id="undo-btn" disabled title="Отменить (Ctrl+Z / Ctrl+Я)">↶ Отменить</button>
+            <button class="btn btn-redo" onclick="historyManager.redo()" id="redo-btn" disabled title="Повторить (Ctrl+Y / Ctrl+Н)">↷ Повторить</button>
+            <button class="btn btn-secondary" onclick="toggleConnectMode()" id="connect-btn">🔗 Соединить</button>
+            <button class="btn btn-secondary" onclick="toggleBreakMode()" id="break-btn">✂️ Разорвать</button>
+            <button class="btn btn-theme" onclick="toggleTheme()" id="theme-btn" title="Переключить тему">🌙 Тема</button>
+            <button class="btn btn-secondary" onclick="previewBot()">👁️ Предпросмотр</button>
+            <button class="btn" onclick="exportBot()">📥 Экспорт Python</button>
+            <button class="btn btn-secondary" onclick="loadFromClipboard()">📋 Загрузить из буфера</button>
+        </div>
+        
+        <div class="hash-output">
+            <label for="bot-hash">Хеш бота (кликните для копирования):</label>
+            <input type="text" id="bot-hash" readonly onclick="copyHashToClipboard()" style="cursor: pointer;">
+        </div>
+
+        <div class="canvas" id="canvas">
+            <div class="zoom-indicator hidden" id="zoom-indicator">100%</div>
+            <div class="canvas-content" id="canvas-content">
+                <svg class="arrow-svg" id="arrow-svg" width="1000" height="600" viewBox="0 0 1000 600">
+                    <defs>
+                        <marker id="arrowhead" markerWidth="12" markerHeight="8" 
+                                refX="11" refY="4" orient="auto">
+                            <polygon points="0 0, 12 4, 0 8" fill="#00b894" stroke="#00a085" stroke-width="0.5" />
+                        </marker>
+                    </defs>
+                </svg>
+                <div class="empty-canvas">
+                    Перетащите блоки сюда для создания бота<br>
+                    <small style="color: rgba(255,255,255,0.7); font-size: 0.9em;">💡 Зажмите и перетаскивайте мышкой для навигации по холсту</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модульная версия скриптов -->
+    <script src="js/utils/Utils.js"></script>
+    <script src="js/utils/PythonExporter.js"></script>
+    <script src="js/core/HistoryManager.js"></script>
+    <script src="js/blocks/BlockGenerator.js"></script>
+    <script src="js/canvas/CanvasManager.js"></script>
+    <script src="js/canvas/ConnectionManager.js"></script>
+    <script src="js/core/BotSimulator.js"></script>
+    <script src="js/core/BotBuilder.js"></script>
+    <script src="js/app_new.js"></script>
+    
+    <!-- Оригинальный скрипт (для отката в случае проблем) -->
+    <!-- <script src="js/app.js"></script> -->
+
+    <!-- Модальное окно предпросмотра -->
+    <div id="preview-modal" class="preview-modal hidden">
+        <div class="preview-container">
+            <div class="preview-header">
+                <h3>👁️ Предпросмотр бота</h3>
+                <button class="preview-close" onclick="closePreview()">&times;</button>
+            </div>
+            <div class="preview-chat" id="preview-chat">
+                <div class="preview-messages" id="preview-messages"></div>
+            </div>
+            <div class="preview-input-area" id="preview-input-area">
+                <input type="text" id="preview-input" placeholder="Введите сообщение..." />
+                <button onclick="sendPreviewMessage()">Отправить</button>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
