@@ -104,7 +104,7 @@ body {
     flex-wrap: wrap;
     overflow-x: auto;
     position: relative;
-    padding-right: 240px; /* reserve space for fixed right controls */
+    padding-right: 300px; /* reserve space for fixed right controls */
 }
 .toolbar .btn,
 .toolbar .btn-secondary,
