@@ -40,6 +40,37 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Загружаем сохраненную тему
     loadSavedTheme();
+
+    // Применяем сохраненные состояния панели и тулбара
+    try {
+        const sidebarCollapsed = localStorage.getItem('sidebar_collapsed') === '1';
+        const toolbarCollapsed = localStorage.getItem('toolbar_collapsed') === '1';
+        const sidebar = document.querySelector('.sidebar');
+        const mainArea = document.querySelector('.main-area');
+        const sidebarBtn = document.getElementById('toggle-sidebar-btn');
+        const toolbarBtn = document.getElementById('toggle-toolbar-btn');
+        const edgeToolbar = document.getElementById('edge-open-toolbar');
+        const edgeToggleSidebar = document.getElementById('edge-toggle-sidebar');
+        if (sidebar && sidebarCollapsed) {
+            sidebar.classList.add('collapsed');
+            if (sidebarBtn) sidebarBtn.textContent = 'показать панель';
+            if (edgeToggleSidebar) edgeToggleSidebar.textContent = 'показать панель';
+        }
+        if (mainArea && toolbarCollapsed) {
+            mainArea.classList.add('toolbar-collapsed');
+            if (toolbarBtn) toolbarBtn.textContent = 'показать тулбар';
+            if (edgeToolbar) edgeToolbar.classList.remove('hidden');
+            if (edgeToggleSidebar) edgeToggleSidebar.classList.remove('hidden');
+            // edge sidebar button label should reflect current sidebar state
+            if (sidebar && sidebar.classList.contains('collapsed')) {
+                edgeToggleSidebar.textContent = 'показать панель';
+            } else {
+                edgeToggleSidebar.textContent = 'скрыть панель';
+            }
+        }
+    } catch (e) {
+        console.warn('Failed to restore toggle states', e);
+    }
     
     // Проверяем наличие всех необходимых классов
     if (typeof HistoryManager === 'undefined' ||
@@ -374,6 +405,48 @@ function loadBotFromHash() {
 
 // Глобальные функции для обратной совместимости
 window.toggleTheme = toggleTheme;
+// Переключатели UI
+function toggleSidebar() {
+    const sidebar = document.querySelector('.sidebar');
+    const btn = document.getElementById('toggle-sidebar-btn');
+    if (!sidebar) return;
+    const collapsed = sidebar.classList.toggle('collapsed');
+    try { localStorage.setItem('sidebar_collapsed', collapsed ? '1' : '0'); } catch (e) {}
+    if (btn) btn.textContent = collapsed ? 'показать панель' : 'скрыть панель';
+    const edgeToggleSidebar = document.getElementById('edge-toggle-sidebar');
+    const mainArea = document.querySelector('.main-area');
+    if (edgeToggleSidebar) {
+        // Edge sidebar button is visible only when toolbar is collapsed
+        const toolbarIsCollapsed = mainArea?.classList.contains('toolbar-collapsed');
+        edgeToggleSidebar.classList.toggle('hidden', !toolbarIsCollapsed);
+        edgeToggleSidebar.textContent = collapsed ? 'показать панель' : 'скрыть панель';
+    }
+}
+
+function toggleToolbar() {
+    const mainArea = document.querySelector('.main-area');
+    const btn = document.getElementById('toggle-toolbar-btn');
+    const edgeBtn = document.getElementById('edge-open-toolbar');
+    const edgeToggleSidebar = document.getElementById('edge-toggle-sidebar');
+    if (!mainArea) return;
+    const collapsed = mainArea.classList.toggle('toolbar-collapsed');
+    try { localStorage.setItem('toolbar_collapsed', collapsed ? '1' : '0'); } catch (e) {}
+    if (btn) btn.textContent = collapsed ? 'показать тулбар' : 'скрыть тулбар';
+    if (edgeBtn) edgeBtn.classList.toggle('hidden', !collapsed);
+    if (edgeToggleSidebar) {
+        // When toolbar collapses, we also show the sidebar toggle near the edge
+        edgeToggleSidebar.classList.toggle('hidden', !collapsed);
+        const sidebar = document.querySelector('.sidebar');
+        if (sidebar && sidebar.classList.contains('collapsed')) {
+            edgeToggleSidebar.textContent = 'показать панель';
+        } else {
+            edgeToggleSidebar.textContent = 'скрыть панель';
+        }
+    }
+}
+
+window.toggleSidebar = toggleSidebar;
+window.toggleToolbar = toggleToolbar;
 window.updateChoiceOptions = updateChoiceOptions;
 window.addOption = addOption;
 window.removeOption = removeOption;

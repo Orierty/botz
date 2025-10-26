@@ -218,14 +218,45 @@ class BotSimulator {
             case 'equals':
                 result = String(userValue) === String(value);
                 break;
+            case 'not_equals':
+                result = String(userValue) !== String(value);
+                break;
+            case 'greater':
+                try {
+                    result = parseFloat(userValue) > parseFloat(value);
+                } catch (e) {
+                    result = false;
+                }
+                break;
+            case 'less':
+                try {
+                    result = parseFloat(userValue) < parseFloat(value);
+                } catch (e) {
+                    result = false;
+                }
+                break;
+            case 'greater_or_equal':
+                try {
+                    result = parseFloat(userValue) >= parseFloat(value);
+                } catch (e) {
+                    result = false;
+                }
+                break;
+            case 'less_or_equal':
+                try {
+                    result = parseFloat(userValue) <= parseFloat(value);
+                } catch (e) {
+                    result = false;
+                }
+                break;
             case 'contains':
                 result = String(userValue).includes(String(value));
                 break;
+            case 'empty':
+                result = !Boolean(String(userValue).trim());
+                break;
             case 'not_empty':
                 result = Boolean(String(userValue).trim());
-                break;
-            case 'not_equals':
-                result = String(userValue) !== String(value);
                 break;
         }
         

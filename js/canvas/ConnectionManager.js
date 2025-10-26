@@ -11,8 +11,36 @@ class ConnectionManager {
         this.selectedOutputPort = null;
         this.branchPickerElement = null;
         this.branchPickerBlockId = null;
+        this.isCreatingConnection = false; // Флаг для предотвращения двойных соединений
         
         this.setupBranchPicker();
+        this.setupRightClickHandler();
+    }
+
+    // Настройка обработчика правой кнопки мыши для отмены действий
+    setupRightClickHandler() {
+        document.addEventListener('contextmenu', (e) => {
+            // Отменяем режим соединения
+            if (this.connectMode) {
+                e.preventDefault();
+                this.toggleConnectMode();
+                return;
+            }
+            
+            // Отменяем режим разрыва
+            if (this.breakMode) {
+                e.preventDefault();
+                this.toggleBreakMode();
+                return;
+            }
+            
+            // Сбрасываем выбор при частичном соединении
+            if (this.firstSelectedBlock) {
+                e.preventDefault();
+                this.resetConnectionSelection();
+                return;
+            }
+        });
     }
 
     // Настройка выбора ветки для блоков с множественными выходами
@@ -247,15 +275,48 @@ class ConnectionManager {
             return;
         }
 
+        // Защита от двойного создания соединения
+        if (this.isCreatingConnection) {
+            console.log('Connection creation already in progress, ignoring');
+            return;
+        }
+
         if (!this.canBlockAcceptInput(targetBlockId)) {
             alert('Целевой блок уже имеет входящее соединение. Сначала разорвите его.');
             return;
         }
 
+        // Проверяем, не существует ли уже такое соединение
+        if (this.connectionExists(this.firstSelectedBlock, targetBlockId, this.selectedOutputPort)) {
+            alert('Это соединение уже существует.');
+            this.resetConnectionSelection();
+            return;
+        }
+
+        // Устанавливаем флаг
+        this.isCreatingConnection = true;
+
         if (window.createConnection) {
             window.createConnection(this.firstSelectedBlock, targetBlockId, { fromPort: this.selectedOutputPort });
         }
+        
+        // Сбрасываем флаг через небольшую задержку
+        setTimeout(() => {
+            this.isCreatingConnection = false;
+        }, 100);
+
         this.resetConnectionSelection();
+    }
+
+    // Проверка существования соединения
+    connectionExists(fromBlockId, toBlockId, fromPort) {
+        if (!window.connections) return false;
+        
+        return window.connections.some(conn => 
+            conn.from === fromBlockId && 
+            conn.to === toBlockId && 
+            conn.fromPort === fromPort
+        );
     }
 
     // Переключение режима соединения
@@ -272,9 +333,15 @@ class ConnectionManager {
             connectBtn.textContent = '❌ Отменить';
             document.body.style.cursor = 'crosshair';
             
+            // Создаем bound функцию для правильного удаления обработчика
+            this.boundBlockClickHandler = (e) => this.handleBlockClick(e);
+            
             // Добавляем обработчики кликов для блоков
             document.querySelectorAll('.bot-block').forEach(block => {
-                block.addEventListener('click', (e) => this.handleBlockClick(e));
+                // Удаляем старый обработчик если был
+                block.removeEventListener('click', this.boundBlockClickHandler);
+                // Добавляем новый
+                block.addEventListener('click', this.boundBlockClickHandler);
             });
         } else {
             connectBtn.classList.remove('connect-mode');
@@ -282,9 +349,11 @@ class ConnectionManager {
             document.body.style.cursor = 'default';
             
             // Убираем обработчики и подсветку
-            document.querySelectorAll('.bot-block').forEach(block => {
-                block.removeEventListener('click', (e) => this.handleBlockClick(e));
-            });
+            if (this.boundBlockClickHandler) {
+                document.querySelectorAll('.bot-block').forEach(block => {
+                    block.removeEventListener('click', this.boundBlockClickHandler);
+                });
+            }
 
             this.resetConnectionSelection();
         }
@@ -298,28 +367,45 @@ class ConnectionManager {
         
         this.breakMode = !this.breakMode;
         const breakBtn = document.getElementById('break-btn');
+        const arrowSvg = document.getElementById('arrow-svg');
         
         if (this.breakMode) {
             breakBtn.classList.add('connect-mode');
             breakBtn.textContent = '❌ Отменить';
             document.body.style.cursor = 'crosshair';
             
-            // Делаем стрелочки кликабельными
+            // Активируем режим разрыва для SVG контейнера
+            if (arrowSvg) {
+                arrowSvg.classList.add('break-mode-active');
+            }
+            
+            // Создаем bound функцию для правильного удаления обработчика
+            this.boundArrowClickHandler = (e) => this.handleArrowClick(e);
+            
+            // Добавляем обработчики кликов для стрелочек
             document.querySelectorAll('.connection-arrow').forEach(arrow => {
-                arrow.style.pointerEvents = 'all';
-                arrow.addEventListener('click', (e) => this.handleArrowClick(e));
+                // Удаляем старый обработчик если был
+                arrow.removeEventListener('click', this.boundArrowClickHandler);
+                // Добавляем новый
+                arrow.addEventListener('click', this.boundArrowClickHandler);
             });
         } else {
             breakBtn.classList.remove('connect-mode');
             breakBtn.textContent = '✂️ Разорвать';
             document.body.style.cursor = 'default';
             
-            // Убираем кликабельность стрелочек
-            document.querySelectorAll('.connection-arrow').forEach(arrow => {
-                arrow.style.pointerEvents = 'none';
-                arrow.removeEventListener('click', (e) => this.handleArrowClick(e));
-                arrow.classList.remove('breaking');
-            });
+            // Деактивируем режим разрыва для SVG контейнера
+            if (arrowSvg) {
+                arrowSvg.classList.remove('break-mode-active');
+            }
+            
+            // Убираем обработчики и анимацию
+            if (this.boundArrowClickHandler) {
+                document.querySelectorAll('.connection-arrow').forEach(arrow => {
+                    arrow.removeEventListener('click', this.boundArrowClickHandler);
+                    arrow.classList.remove('breaking');
+                });
+            }
         }
     }
 

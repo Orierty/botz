@@ -49,18 +49,29 @@
 body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     background: linear-gradient(135deg, var(--bg-gradient-start) 0%, var(--bg-gradient-end) 100%);
-    min-height: 100vh;
+    height: 100vh;
     display: flex;
     transition: background 0.3s ease;
+    overflow: hidden;
 }
 .sidebar {
     width: 300px;
     background: var(--sidebar-bg);
     backdrop-filter: blur(20px);
     border-right: 1px solid var(--sidebar-border);
-    padding: 20px;
+    padding: 15px;
     box-shadow: 2px 0 20px rgba(0, 0, 0, 0.1);
     transition: background 0.3s ease, border-color 0.3s ease;
+    height: 100vh;
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+.sidebar.collapsed {
+    width: 0;
+    min-width: 0;
+    padding: 0;
+    border-right: none;
+    overflow: hidden;
 }
 .sidebar h2, .sidebar h3 {
     color: var(--text-primary);
@@ -70,6 +81,11 @@ body {
     display: flex;
     flex-direction: column;
     padding: 20px;
+    height: 100vh;
+    overflow: hidden;
+}
+.main-area.toolbar-collapsed .toolbar {
+    display: none;
 }
 .toolbar {
     background: var(--toolbar-bg);
@@ -79,9 +95,38 @@ body {
     margin-bottom: 20px;
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
     display: flex;
-    gap: 15px;
+    gap: 12px 12px;
     align-items: center;
     transition: background 0.3s ease;
+    /* Ensure toolbar does not overflow its container */
+    width: 100%;
+    box-sizing: border-box;
+    flex-wrap: wrap;
+    overflow-x: auto;
+    position: relative;
+    padding-right: 240px; /* reserve space for fixed right controls */
+}
+.toolbar .btn,
+.toolbar .btn-secondary,
+.toolbar .btn-undo,
+.toolbar .btn-redo,
+.toolbar .btn-theme {
+    white-space: nowrap;
+}
+.toolbar-spacer {
+    flex: 1 1 auto;
+    min-width: 10px;
+}
+
+.toolbar-right-fixed {
+    position: absolute;
+    top: 15px; /* align with toolbar vertical padding for baseline match */
+    right: 20px;
+    display: flex;
+    gap: 12px;
+}
+.toolbar.collapsible {
+    position: relative;
 }
 .canvas {
     flex: 1;
@@ -109,7 +154,7 @@ body {
 }
 /* Индикатор масштаба */
 .zoom-indicator {
-    position: absolute;
+    position: fixed;
     bottom: 20px;
     right: 20px;
     background: rgba(0, 0, 0, 0.8);
@@ -127,6 +172,34 @@ body {
     opacity: 0;
     pointer-events: none;
 }
+
+/* Кнопка центрирования canvas */
+.center-canvas-btn {
+    position: fixed;
+    bottom: 60px;
+    right: 20px;
+    background: var(--button-primary);
+    color: white;
+    border: none;
+    padding: 10px 16px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    z-index: 1000;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    transition: all 0.2s ease;
+}
+.center-canvas-btn:hover {
+    background: var(--button-primary-hover);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+}
+.center-canvas-btn:active {
+    transform: translateY(0);
+}
+
 /* Анимация для новых соединений */
 @keyframes dash {
     from {
@@ -141,13 +214,14 @@ body {
 .block-type {
     background: linear-gradient(145deg, #6c5ce7, #a29bfe);
     color: white;
-    padding: 12px 15px;
-    margin: 8px 0;
-    border-radius: 10px;
+    padding: 8px 12px;
+    margin: 5px 0;
+    border-radius: 8px;
     cursor: grab;
     transition: all 0.3s ease;
     user-select: none;
     box-shadow: 0 4px 15px rgba(108, 92, 231, 0.3);
+    font-size: 14px;
 }
 .block-type:hover {
     transform: translateY(-2px);
@@ -398,6 +472,16 @@ h2 {
     pointer-events: none;
     z-index: 1;
     overflow: visible;
+}
+
+/* В режиме разрыва соединений SVG и стрелки становятся кликабельными */
+.arrow-svg.break-mode-active {
+    pointer-events: all !important;
+}
+
+.arrow-svg.break-mode-active .connection-arrow {
+    pointer-events: all !important;
+    cursor: pointer !important;
 }
 .drag-helper {
     position: fixed;
@@ -675,10 +759,10 @@ h2 {
 /* Стили для секций боковой панели */
 .sidebar h3 {
     color: #666;
-    font-size: 16px;
-    margin-top: 20px;
-    margin-bottom: 10px;
-    padding-bottom: 8px;
+    font-size: 14px;
+    margin-top: 15px;
+    margin-bottom: 8px;
+    padding-bottom: 5px;
     border-bottom: 1px solid rgba(102, 102, 102, 0.2);
 }
 /* E-commerce блоки в sidebar с разными градиентами */
@@ -718,6 +802,9 @@ h2 {
     .sidebar {
         width: 250px;
     }
+    .sidebar.collapsed {
+        width: 0;
+    }
     
     .button-item, .field-item {
         flex-direction: column;
@@ -734,6 +821,69 @@ h2 {
         margin-top: 5px;
     }
 }
+
+/* Toggle buttons for collapsing UI */
+.ui-toggles {
+    position: fixed;
+    top: 10px;
+    left: 10px;
+    display: flex;
+    gap: 8px;
+    z-index: 1200;
+}
+.ui-toggle-btn {
+    background: var(--button-primary);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 8px 10px;
+    font-size: 13px;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    transition: background 0.2s ease, transform 0.1s ease;
+}
+.ui-toggle-btn:hover {
+    background: var(--button-primary-hover);
+}
+.ui-toggle-btn:active {
+    transform: translateY(1px);
+}
+
+/* Edge reopen buttons (appear only when panels are collapsed) */
+.edge-toggle {
+    position: fixed;
+    z-index: 1200;
+    background: var(--button-primary);
+    color: #fff;
+    border: none;
+    border-radius: 20px;
+    padding: 8px 12px;
+    font-size: 13px;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    transition: background 0.2s ease, transform 0.1s ease, opacity 0.2s ease;
+}
+.edge-toggle:hover { background: var(--button-primary-hover); }
+.edge-toggle:active { transform: translateY(1px); }
+
+.edge-left {
+    left: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+.edge-top-right {
+    top: 10px;
+    right: 20px;
+}
+
+/* Secondary edge button (to the left of the first) */
+.edge-top-right-secondary {
+    top: 10px;
+    right: 160px;
+}
+
+.edge-toggle.hidden { display: none; }
 /* Анимации для добавления/удаления элементов */
 .button-item, .field-item {
     animation: slideIn 0.3s ease;

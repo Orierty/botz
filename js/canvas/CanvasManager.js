@@ -306,8 +306,8 @@ class CanvasManager {
     requestBlockPositionUpdate(blockId, element, x, y) {
         this.pendingBlockPositions.set(blockId, {
             element,
-            x: Math.max(0, x),
-            y: Math.max(0, y)
+            x: x,
+            y: y
         });
 
         if (!this.blockPositionRaf) {

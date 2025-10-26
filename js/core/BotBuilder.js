@@ -10,6 +10,7 @@ class BotBuilder {
         this.connections = [];
         this.blockCounter = 0;
         this.selectedBlock = null;
+        this.copiedBlock = null; // Для копирования блоков
         
         // Менеджеры
         this.historyManager = null;
@@ -56,6 +57,9 @@ class BotBuilder {
         // Настройка горячих клавиш
         this.setupKeyboardShortcuts();
         
+        // Настройка правой кнопки мыши для снятия выделения
+        this.setupRightClickForBlocks();
+        
         // Создаем начальный снимок
         setTimeout(() => {
             this.historyManager.createSnapshot();
@@ -90,6 +94,13 @@ class BotBuilder {
         window.previewBot = () => this.previewBot();
         window.loadFromClipboard = () => this.loadFromClipboard();
         window.copyHashToClipboard = () => this.copyHashToClipboard();
+        
+        // Функции для работы с файлами
+        window.saveToFile = () => this.saveToFile();
+        window.loadFromFile = () => this.loadFromFile();
+        
+        // Функция центрирования canvas
+        window.centerCanvas = () => this.centerCanvas();
         
         // Функции для работы с вариантами выбора и кнопками
         // Эти функции импортируются из app_new.js
@@ -130,6 +141,73 @@ class BotBuilder {
                 e.preventDefault();
                 this.historyManager.redo();
             }
+            // Ctrl+C или Ctrl+С - Копировать блок
+            else if ((e.ctrlKey || e.metaKey) && (e.key === 'c' || e.key === 'с')) {
+                e.preventDefault();
+                this.copyBlock();
+            }
+            // Ctrl+V или Ctrl+М - Вставить блок
+            else if ((e.ctrlKey || e.metaKey) && (e.key === 'v' || e.key === 'м')) {
+                e.preventDefault();
+                this.pasteBlock();
+            }
+            // Delete или Backspace - Удалить выбранный блок
+            else if ((e.key === 'Delete' || e.key === 'Backspace') && this.selectedBlock) {
+                e.preventDefault();
+                if (confirm('Удалить выбранный блок?')) {
+                    this.deleteBlock(this.selectedBlock);
+                }
+            }
+        });
+    }
+
+    // Настройка правой кнопки мыши для снятия выделения с блоков
+    setupRightClickForBlocks() {
+        const canvas = document.getElementById('canvas');
+        if (!canvas) return;
+
+        // Обработчик правой кнопки мыши
+        canvas.addEventListener('contextmenu', (e) => {
+            // Снимаем выделение только если клик не на блоке и не на input/textarea
+            const isBlock = e.target.closest('.bot-block');
+            const isInput = e.target.tagName === 'INPUT' || 
+                           e.target.tagName === 'TEXTAREA' || 
+                           e.target.tagName === 'SELECT' ||
+                           e.target.tagName === 'BUTTON';
+            
+            if (!isBlock && !isInput && this.selectedBlock) {
+                e.preventDefault();
+                
+                // Снимаем выделение с блока
+                const prevElement = document.getElementById(this.selectedBlock);
+                if (prevElement) {
+                    prevElement.classList.remove('selected');
+                }
+                this.selectedBlock = null;
+                
+                // Обновляем стрелки (убираем цветовое выделение)
+                this.updateArrows();
+            }
+        });
+
+        // Обработчик обычного клика - снимаем фокус с input при клике вне блока
+        canvas.addEventListener('mousedown', (e) => {
+            const isBlock = e.target.closest('.bot-block');
+            const isInput = e.target.tagName === 'INPUT' || 
+                           e.target.tagName === 'TEXTAREA' || 
+                           e.target.tagName === 'SELECT' ||
+                           e.target.tagName === 'BUTTON';
+            
+            // Если клик не на блоке и не на элементе ввода - снимаем фокус
+            if (!isBlock && !isInput && document.activeElement) {
+                const activeIsInput = document.activeElement.tagName === 'INPUT' ||
+                                     document.activeElement.tagName === 'TEXTAREA' ||
+                                     document.activeElement.tagName === 'SELECT';
+                
+                if (activeIsInput) {
+                    document.activeElement.blur();
+                }
+            }
         });
     }
 
@@ -147,8 +225,8 @@ class BotBuilder {
         const blockData = {
             id: blockId,
             type: type,
-            x: Math.max(0, Math.round(x)),
-            y: Math.max(0, Math.round(y)),
+            x: Math.round(x),
+            y: Math.round(y),
             connections: Utils.createInitialConnections(type)
         };
 
@@ -321,6 +399,98 @@ class BotBuilder {
         if (blockElement) {
             blockElement.classList.add('selected');
         }
+    }
+
+    // Копирование блока (Ctrl+C)
+    copyBlock() {
+        if (!this.selectedBlock) {
+            console.log('No block selected to copy');
+            return;
+        }
+
+        const blockData = this.blocks[this.selectedBlock];
+        if (!blockData) {
+            console.log('Selected block not found in blocks');
+            return;
+        }
+
+        // Создаем глубокую копию данных блока (без соединений)
+        this.copiedBlock = Utils.deepClone(blockData);
+        
+        // Очищаем соединения у скопированного блока
+        this.copiedBlock.connections = Utils.createInitialConnections(this.copiedBlock.type);
+        
+        // Визуальная обратная связь
+        this.showNotification('Блок скопирован! Нажмите Ctrl+V для вставки', 'info');
+        
+        console.log('Block copied:', this.copiedBlock.type);
+    }
+
+    // Вставка блока (Ctrl+V)
+    pasteBlock() {
+        if (!this.copiedBlock) {
+            console.log('No block copied');
+            this.showNotification('Сначала скопируйте блок (Ctrl+C)', 'info');
+            return;
+        }
+
+        // Получаем позицию для нового блока (со смещением)
+        const originalElement = document.getElementById(this.selectedBlock);
+        let offsetX = 50;
+        let offsetY = 50;
+        
+        if (originalElement) {
+            const originalX = parseInt(originalElement.style.left) || 0;
+            const originalY = parseInt(originalElement.style.top) || 0;
+            offsetX = originalX + 50;
+            offsetY = originalY + 50;
+        } else {
+            // Если нет выбранного блока, вставляем в центр видимой области
+            const canvas = document.getElementById('canvas');
+            if (canvas) {
+                offsetX = canvas.scrollLeft + 200;
+                offsetY = canvas.scrollTop + 200;
+            }
+        }
+
+        // Создаем новый блок на основе скопированного
+        const newBlockId = this.createBlock(this.copiedBlock.type, offsetX, offsetY);
+        
+        if (!newBlockId) {
+            console.error('Failed to create new block');
+            return;
+        }
+
+        const newBlock = this.blocks[newBlockId];
+        if (!newBlock) {
+            console.error('New block not found after creation');
+            return;
+        }
+
+        // Копируем все данные кроме id, позиции и соединений
+        Object.keys(this.copiedBlock).forEach(key => {
+            if (key !== 'id' && key !== 'x' && key !== 'y' && key !== 'connections') {
+                newBlock[key] = Utils.deepClone(this.copiedBlock[key]);
+            }
+        });
+
+        // Обновляем DOM элемент с новыми данными
+        const newBlockElement = document.getElementById(newBlockId);
+        if (newBlockElement) {
+            newBlockElement.innerHTML = BlockGenerator.generateBlockContent(newBlock);
+        }
+
+        // Выбираем новый блок
+        this.selectBlock(newBlockId);
+
+        // Обновляем хеш и создаем снимок
+        this.historyManager.createSnapshot();
+        this.updateHashInRealTime();
+
+        // Визуальная обратная связь
+        this.showNotification('Блок вставлен!', 'success');
+        
+        console.log('Block pasted:', newBlockId);
     }
 
     // Обновление данных блока
@@ -915,8 +1085,8 @@ class BotBuilder {
             const deltaX = (e.clientX - startX) / this.canvasManager.canvasZoom;
             const deltaY = (e.clientY - startY) / this.canvasManager.canvasZoom;
             
-            const newX = Math.max(0, initialX + deltaX);
-            const newY = Math.max(0, initialY + deltaY);
+            const newX = initialX + deltaX;
+            const newY = initialY + deltaY;
 
             this.canvasManager.requestBlockPositionUpdate(element.id, element, newX, newY);
         });
@@ -1182,6 +1352,194 @@ class BotBuilder {
         }, 4000);
     }
 
+    // Сохранение бота в файл
+    saveToFile() {
+        if (Object.keys(this.blocks).length === 0) {
+            alert('Нет блоков для сохранения');
+            return;
+        }
+
+        try {
+            // Получаем данные бота
+            const botData = {
+                blocks: this.blocks,
+                connections: this.connections,
+                blockCounter: this.blockCounter,
+                settings: {
+                    botName: document.getElementById('bot-name')?.value || 'МойБот',
+                    botToken: document.getElementById('bot-token')?.value || ''
+                },
+                version: '1.0',
+                created: new Date().toISOString()
+            };
+
+            // Конвертируем в JSON
+            const jsonString = JSON.stringify(botData, null, 2);
+            
+            // Создаем Blob
+            const blob = new Blob([jsonString], { type: 'application/json' });
+            
+            // Создаем ссылку для скачивания
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            
+            // Формируем имя файла
+            const botName = botData.settings.botName.replace(/[^a-zа-яё0-9]/gi, '_');
+            const timestamp = new Date().toISOString().split('T')[0];
+            a.download = `${botName}_${timestamp}.bot`;
+            
+            // Скачиваем файл
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            
+            // Освобождаем URL
+            URL.revokeObjectURL(url);
+            
+            this.showNotification('Файл успешно сохранен!', 'success');
+        } catch (error) {
+            console.error('Error saving to file:', error);
+            alert('Произошла ошибка при сохранении файла');
+        }
+    }
+
+    // Загрузка бота из файла
+    loadFromFile() {
+        const fileInput = document.getElementById('file-input');
+        if (!fileInput) {
+            alert('Элемент загрузки файла не найден');
+            return;
+        }
+
+        // Очищаем старое значение и клонируем input для полной очистки обработчиков
+        fileInput.value = '';
+        const newFileInput = fileInput.cloneNode(true);
+        fileInput.parentNode.replaceChild(newFileInput, fileInput);
+
+        // Создаем обработчик для загрузки файла (один раз)
+        const handleFileLoad = (event) => {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            // Проверяем расширение файла
+            if (!file.name.endsWith('.bot') && !file.name.endsWith('.json')) {
+                alert('Пожалуйста, выберите файл с расширением .bot или .json');
+                fileInput.value = '';
+                return;
+            }
+
+            const reader = new FileReader();
+            
+            reader.onload = (e) => {
+                try {
+                    const content = e.target.result;
+                    const botData = JSON.parse(content);
+
+                    // Валидируем структуру данных
+                    if (!botData.blocks || !botData.connections) {
+                        alert('Некорректная структура файла бота');
+                        return;
+                    }
+
+                    // Подтверждение загрузки
+                    if (Object.keys(this.blocks).length > 0) {
+                        if (!confirm('Это заменит текущий проект. Продолжить?')) {
+                            fileInput.value = '';
+                            return;
+                        }
+                    }
+
+                    // Очищаем текущие данные
+                    this.clearCanvasForLoad();
+
+                    // Загружаем новые данные
+                    this.blocks = botData.blocks || {};
+                    this.connections = botData.connections || [];
+                    this.blockCounter = botData.blockCounter || Math.max(
+                        ...Object.values(this.blocks).map(b => 
+                            parseInt(b.id.replace('block_', '')) || 0
+                        ), 0
+                    );
+
+                    // Обновляем глобальные ссылки
+                    window.blocks = this.blocks;
+                    window.connections = this.connections;
+
+                    // Восстанавливаем настройки бота
+                    if (botData.settings) {
+                        const nameInput = document.getElementById('bot-name');
+                        const tokenInput = document.getElementById('bot-token');
+                        if (nameInput && botData.settings.botName) {
+                            nameInput.value = botData.settings.botName;
+                        }
+                        if (tokenInput && botData.settings.botToken) {
+                            tokenInput.value = botData.settings.botToken;
+                        }
+                    }
+
+                    // Восстанавливаем блоки на canvas
+                    Object.values(this.blocks).forEach(blockData => {
+                        Utils.normalizeBlockConnections(blockData);
+                        this.createBlockElementFromData(blockData);
+                    });
+
+                    // Восстанавливаем соединения после создания всех блоков
+                    (this.connections || []).forEach(connection => {
+                        this.createConnection(connection.from, connection.to, {
+                            fromPort: connection.fromPort || 'default',
+                            connectionId: connection.id,
+                            skipHashUpdate: true
+                        });
+                    });
+                    
+                    // Принудительно обновляем все стрелки после загрузки
+                    setTimeout(() => {
+                        this.canvasManager.clearCanvasRectCache();
+                        this.updateArrows();
+                        
+                        setTimeout(() => {
+                            this.forceUpdateArrows();
+                        }, 100);
+                    }, 100);
+
+                    // Скрываем пустое сообщение
+                    this.canvasManager.hideEmptyMessage();
+
+                    // Создаем новый снимок истории
+                    this.historyManager.clear();
+                    this.historyManager.createSnapshot();
+
+                    // Обновляем хеш
+                    this.updateHashInRealTime();
+
+                    // Показываем уведомление об успехе
+                    this.showNotification(`Проект "${file.name}" успешно загружен!`, 'success');
+
+                } catch (error) {
+                    console.error('Error parsing file:', error);
+                    alert('Ошибка при чтении файла. Проверьте корректность данных.');
+                } finally {
+                    // Очищаем input для возможности повторной загрузки того же файла
+                    fileInput.value = '';
+                }
+            };
+
+            reader.onerror = () => {
+                alert('Ошибка при чтении файла');
+                fileInput.value = '';
+            };
+
+            reader.readAsText(file);
+        };
+
+        // Добавляем обработчик с опцией once: true (автоматически удаляется после первого срабатывания)
+        newFileInput.addEventListener('change', handleFileLoad, { once: true });
+
+        // Открываем диалог выбора файла
+        newFileInput.click();
+    }
+
     // Экспорт бота в Python код
     exportBot() {
         if (typeof PythonExporter !== 'undefined') {
@@ -1201,6 +1559,57 @@ class BotBuilder {
         const simulator = new BotSimulator(this.blocks, this.connections);
         window.currentSimulator = simulator; // Сохраняем для глобального доступа
         simulator.start();
+    }
+
+    // Центрирование canvas на блоках и сброс зума
+    centerCanvas() {
+        const blockIds = Object.keys(this.blocks);
+        
+        // Если блоков нет - просто сбрасываем зум и позицию
+        if (blockIds.length === 0) {
+            this.canvasManager.resetZoom();
+            this.showNotification('Canvas сброшен', 'info');
+            return;
+        }
+
+        // Находим границы всех блоков
+        let minX = Infinity, minY = Infinity;
+        let maxX = -Infinity, maxY = -Infinity;
+
+        blockIds.forEach(blockId => {
+            const block = this.blocks[blockId];
+            const blockElement = document.getElementById(blockId);
+            
+            if (blockElement) {
+                const blockWidth = blockElement.offsetWidth || 250;
+                const blockHeight = blockElement.offsetHeight || 100;
+                
+                minX = Math.min(minX, block.x);
+                minY = Math.min(minY, block.y);
+                maxX = Math.max(maxX, block.x + blockWidth);
+                maxY = Math.max(maxY, block.y + blockHeight);
+            }
+        });
+
+        // Находим центр всех блоков
+        const centerX = (minX + maxX) / 2;
+        const centerY = (minY + maxY) / 2;
+
+        // Получаем размер видимой области canvas
+        const canvas = document.getElementById('canvas');
+        const canvasWidth = canvas.offsetWidth;
+        const canvasHeight = canvas.offsetHeight;
+
+        // Вычисляем смещение чтобы центр блоков оказался в центре экрана
+        const offsetX = (canvasWidth / 2) - centerX;
+        const offsetY = (canvasHeight / 2) - centerY;
+
+        // Применяем центрирование
+        this.canvasManager.canvasOffsetX = offsetX;
+        this.canvasManager.canvasOffsetY = offsetY;
+        this.canvasManager.setZoom(1); // Сброс зума на 100%
+
+        this.showNotification('Canvas центрирован', 'success');
     }
 }
 

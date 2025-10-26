@@ -713,12 +713,34 @@ async def check_condition(chat_id: int, block: dict) -> bool:
     
     if condition == 'equals':
         return str(user_value) == str(value)
-    elif condition == 'contains':
-        return str(value) in str(user_value)
-    elif condition == 'not_empty':
-        return bool(str(user_value).strip())
     elif condition == 'not_equals':
         return str(user_value) != str(value)
+    elif condition == 'greater':
+        try:
+            return float(user_value) > float(value)
+        except (ValueError, TypeError):
+            return False
+    elif condition == 'less':
+        try:
+            return float(user_value) < float(value)
+        except (ValueError, TypeError):
+            return False
+    elif condition == 'greater_or_equal':
+        try:
+            return float(user_value) >= float(value)
+        except (ValueError, TypeError):
+            return False
+    elif condition == 'less_or_equal':
+        try:
+            return float(user_value) <= float(value)
+        except (ValueError, TypeError):
+            return False
+    elif condition == 'contains':
+        return str(value) in str(user_value)
+    elif condition == 'empty':
+        return not bool(str(user_value).strip())
+    elif condition == 'not_empty':
+        return bool(str(user_value).strip())
     
     return False
 

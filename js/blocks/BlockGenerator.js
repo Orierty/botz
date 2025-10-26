@@ -102,9 +102,15 @@ class BlockGenerator {
         
         const conditionSelect = `
             <select onchange="updateBlockData('${blockData.id}', 'condition', this.value)">
-                <option value="equals" ${blockData.condition === 'equals' ? 'selected' : ''}>Равно</option>
-                <option value="contains" ${blockData.condition === 'contains' ? 'selected' : ''}>Содержит</option>
-                <option value="not_empty" ${blockData.condition === 'not_empty' ? 'selected' : ''}>Не пусто</option>
+                <option value="equals" ${blockData.condition === 'equals' ? 'selected' : ''}>== Равно</option>
+                <option value="not_equals" ${blockData.condition === 'not_equals' ? 'selected' : ''}>!= Не равно</option>
+                <option value="greater" ${blockData.condition === 'greater' ? 'selected' : ''}>&#62; Больше</option>
+                <option value="less" ${blockData.condition === 'less' ? 'selected' : ''}>&#60; Меньше</option>
+                <option value="greater_or_equal" ${blockData.condition === 'greater_or_equal' ? 'selected' : ''}>&#62;= Больше или равно</option>
+                <option value="less_or_equal" ${blockData.condition === 'less_or_equal' ? 'selected' : ''}>&#60;= Меньше или равно</option>
+                <option value="contains" ${blockData.condition === 'contains' ? 'selected' : ''}>⊃ Содержит</option>
+                <option value="empty" ${blockData.condition === 'empty' ? 'selected' : ''}>∅ Пусто</option>
+                <option value="not_empty" ${blockData.condition === 'not_empty' ? 'selected' : ''}>✓ Не пусто</option>
             </select>
         `;
         const conditionGroup = this.generateFormGroup('Условие:', conditionSelect);
@@ -219,10 +225,15 @@ class BlockGenerator {
                 <input type="text" placeholder="user_choice" onchange="updateBlockData('${blockData.id}', 'while_variable', this.value)" oninput="updateBlockData('${blockData.id}', 'while_variable', this.value)" value="${blockData.while_variable || ''}">
                 <label>Условие:</label>
                 <select onchange="updateBlockData('${blockData.id}', 'while_condition', this.value)">
-                    <option value="equals" ${blockData.while_condition === 'equals' ? 'selected' : ''}>Равно</option>
-                    <option value="not_equals" ${blockData.while_condition === 'not_equals' ? 'selected' : ''}>Не равно</option>
-                    <option value="contains" ${blockData.while_condition === 'contains' ? 'selected' : ''}>Содержит</option>
-                    <option value="not_empty" ${blockData.while_condition === 'not_empty' ? 'selected' : ''}>Не пусто</option>
+                    <option value="equals" ${blockData.while_condition === 'equals' ? 'selected' : ''}>== Равно</option>
+                    <option value="not_equals" ${blockData.while_condition === 'not_equals' ? 'selected' : ''}>!= Не равно</option>
+                    <option value="greater" ${blockData.while_condition === 'greater' ? 'selected' : ''}>&#62; Больше</option>
+                    <option value="less" ${blockData.while_condition === 'less' ? 'selected' : ''}>&#60; Меньше</option>
+                    <option value="greater_or_equal" ${blockData.while_condition === 'greater_or_equal' ? 'selected' : ''}>&#62;= Больше или равно</option>
+                    <option value="less_or_equal" ${blockData.while_condition === 'less_or_equal' ? 'selected' : ''}>&#60;= Меньше или равно</option>
+                    <option value="contains" ${blockData.while_condition === 'contains' ? 'selected' : ''}>⊃ Содержит</option>
+                    <option value="empty" ${blockData.while_condition === 'empty' ? 'selected' : ''}>∅ Пусто</option>
+                    <option value="not_empty" ${blockData.while_condition === 'not_empty' ? 'selected' : ''}>✓ Не пусто</option>
                 </select>
                 <label>Значение:</label>
                 <input type="text" placeholder="значение" onchange="updateBlockData('${blockData.id}', 'while_value', this.value)" oninput="updateBlockData('${blockData.id}', 'while_value', this.value)" value="${blockData.while_value || ''}">
@@ -249,11 +260,15 @@ class BlockGenerator {
     // E-commerce блоки далее...
     static generateImageBlock(blockData) {
         const header = this.generateBlockHeader('Отправить изображение', 'IMAGE', blockData.id);
+        const imageUrlGroup = this.generateFormGroup(
+            'Ссылка на изображение (URL):',
+            `<input id="${blockData.id}_image" type="text" placeholder="https://example.com/image.jpg" onchange="updateBlockData('${blockData.id}', 'image_file', this.value)" oninput="updateBlockData('${blockData.id}', 'image_file', this.value)" value="${blockData.image_file || ''}">`
+        );
         const captionGroup = this.generateFormGroup(
             'Подпись к изображению:',
-            `<textarea placeholder="Описание товара, цена, характеристики..." onchange="updateBlockData('${blockData.id}', 'caption', this.value)" oninput="updateBlockData('${blockData.id}', 'caption', this.value)">${blockData.caption || ''}</textarea>`
+            `<textarea id="${blockData.id}_caption" placeholder="Подпись к изображению" onchange="updateBlockData('${blockData.id}', 'caption', this.value)" oninput="updateBlockData('${blockData.id}', 'caption', this.value)">${blockData.caption || ''}</textarea>`
         );
-        return header + captionGroup;
+        return header + imageUrlGroup + captionGroup;
     }
 
     static generateInlineKeyboardBlock(blockData) {

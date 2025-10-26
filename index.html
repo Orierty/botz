@@ -98,16 +98,22 @@
     </div>
 
     <div class="main-area">
-        <div class="toolbar">
+        <div class="toolbar collapsible">
             <button class="btn" onclick="clearCanvas()">🗑️ Очистить</button>
             <button class="btn btn-undo" onclick="historyManager.undo()" id="undo-btn" disabled title="Отменить (Ctrl+Z / Ctrl+Я)">↶ Отменить</button>
             <button class="btn btn-redo" onclick="historyManager.redo()" id="redo-btn" disabled title="Повторить (Ctrl+Y / Ctrl+Н)">↷ Повторить</button>
-            <button class="btn btn-secondary" onclick="toggleConnectMode()" id="connect-btn">🔗 Соединить</button>
-            <button class="btn btn-secondary" onclick="toggleBreakMode()" id="break-btn">✂️ Разорвать</button>
-            <button class="btn btn-theme" onclick="toggleTheme()" id="theme-btn" title="Переключить тему">🌙 Тема</button>
-            <button class="btn btn-secondary" onclick="previewBot()">👁️ Предпросмотр</button>
+            <button class="btn btn-secondary" onclick="toggleConnectMode()" id="connect-btn" title="Соединить блоки (ПКМ для отмены)">🔗 Соединить</button>
+            <button class="btn btn-secondary" onclick="toggleBreakMode()" id="break-btn" title="Разорвать соединение (ПКМ для отмены)">✂️ Разорвать</button>
+            <button class="btn btn-secondary" onclick="previewBot()">👁️ Просмотр</button>
             <button class="btn" onclick="exportBot()">📥 Экспорт Python</button>
-            <button class="btn btn-secondary" onclick="loadFromClipboard()">📋 Загрузить из буфера</button>
+            <button class="btn btn-secondary" onclick="saveToFile()">💾 Сохранить файл</button>
+            <button class="btn btn-secondary" onclick="loadFromFile()">📂 Загрузить файл</button>
+            <button class="btn btn-theme" onclick="toggleTheme()" id="theme-btn" title="Переключить тему">🌙 Тема</button>
+            <div class="toolbar-spacer"></div>
+            <div class="toolbar-right-fixed">
+                <button id="toggle-sidebar-btn" class="btn btn-secondary" onclick="toggleSidebar()" title="Скрыть/показать левую панель">скрыть панель</button>
+                <button id="toggle-toolbar-btn" class="btn btn-secondary" onclick="toggleToolbar()" title="Скрыть/показать тулбар">скрыть тулбар</button>
+            </div>
         </div>
         
         <div class="hash-output">
@@ -117,6 +123,7 @@
 
         <div class="canvas" id="canvas">
             <div class="zoom-indicator hidden" id="zoom-indicator">100%</div>
+            <button class="center-canvas-btn" onclick="centerCanvas()" title="Центровать и сбросить зум (100%)">🎯 Центровать</button>
             <div class="canvas-content" id="canvas-content">
                 <svg class="arrow-svg" id="arrow-svg" width="1000" height="600" viewBox="0 0 1000 600">
                     <defs>
@@ -133,6 +140,13 @@
             </div>
         </div>
     </div>
+
+    <!-- Edge reopen buttons (always reachable) -->
+    <button id="edge-open-toolbar" class="edge-toggle edge-top-right hidden" onclick="toggleToolbar()">показать тулбар</button>
+    <button id="edge-toggle-sidebar" class="edge-toggle edge-top-right-secondary hidden" onclick="toggleSidebar()">скрыть панель</button>
+
+    <!-- Скрытый input для загрузки файлов -->
+    <input type="file" id="file-input" accept=".bot,.json" style="display: none;">
 
     <!-- Модульная версия скриптов -->
     <script src="js/utils/Utils.js"></script>
