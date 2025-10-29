@@ -334,7 +334,35 @@ class BlockGenerator {
 
     static generateDatabaseBlock(blockData) {
         const header = this.generateBlockHeader('База данных', 'DB', blockData.id);
-        return header + this.generateFormGroup('Операция:', `<select><option>Сохранить</option><option>Загрузить</option></select>`);
+
+        const operationGroup = this.generateFormGroup(
+            'Операция:',
+            `<select onchange="updateBlockData('${blockData.id}', 'operation', this.value)">
+                <option value="save" ${blockData.operation === 'save' || !blockData.operation ? 'selected' : ''}>Сохранить данные</option>
+                <option value="load" ${blockData.operation === 'load' ? 'selected' : ''}>Загрузить данные</option>
+                <option value="delete" ${blockData.operation === 'delete' ? 'selected' : ''}>Удалить данные</option>
+                <option value="exists" ${blockData.operation === 'exists' ? 'selected' : ''}>Проверить существование</option>
+            </select>`
+        );
+
+        const keyGroup = this.generateFormGroup(
+            'Ключ (ID записи, можно использовать переменные):',
+            `<input type="text" placeholder="user_{user_id}" onchange="updateBlockData('${blockData.id}', 'key', this.value)" oninput="updateBlockData('${blockData.id}', 'key', this.value)" value="${blockData.key || ''}">`
+        );
+
+        const dataGroup = this.generateFormGroup(
+            'Данные для сохранения (JSON или переменная):',
+            `<textarea placeholder='{"name": "{customer_name}", "phone": "{customer_phone}"}' onchange="updateBlockData('${blockData.id}', 'data', this.value)" oninput="updateBlockData('${blockData.id}', 'data', this.value)">${blockData.data || ''}</textarea>
+            <small style="color: #666;">Для сохранения: укажите JSON или переменную<br>Для загрузки: данные сохранятся в переменную из поля ниже</small>`
+        );
+
+        const resultVarGroup = this.generateFormGroup(
+            'Переменная для результата:',
+            `<input type="text" placeholder="loaded_data" onchange="updateBlockData('${blockData.id}', 'result_variable', this.value)" oninput="updateBlockData('${blockData.id}', 'result_variable', this.value)" value="${blockData.result_variable || 'db_result'}">
+            <small style="color: #666;">Результат операции сохранится в эту переменную</small>`
+        );
+
+        return header + operationGroup + keyGroup + dataGroup + resultVarGroup;
     }
 
     static generateCatalogBlock(blockData) {
@@ -380,7 +408,39 @@ class BlockGenerator {
 
     static generateOrderFormBlock(blockData) {
         const header = this.generateBlockHeader('Форма заказа', 'FORM', blockData.id);
-        return header + this.generateFormGroup('Поля:', `<div>Настройка полей формы</div>`);
+
+        // Генерируем поля формы
+        const fields = blockData.fields || [{ type: 'name', variable: 'customer_name' }];
+        const fieldsHTML = fields.map((field) => `
+            <div class="field-item">
+                <select onchange="updateOrderFields('${blockData.id}')">
+                    <option value="name" ${field.type === 'name' ? 'selected' : ''}>Имя</option>
+                    <option value="phone" ${field.type === 'phone' ? 'selected' : ''}>Телефон</option>
+                    <option value="email" ${field.type === 'email' ? 'selected' : ''}>Email</option>
+                    <option value="address" ${field.type === 'address' ? 'selected' : ''}>Адрес</option>
+                    <option value="comment" ${field.type === 'comment' ? 'selected' : ''}>Комментарий</option>
+                </select>
+                <input type="text" placeholder="Переменная" onchange="updateOrderFields('${blockData.id}')" oninput="updateOrderFields('${blockData.id}')" value="${field.variable || ''}">
+                <button class="remove-field" onclick="removeOrderField(this)">&times;</button>
+            </div>
+        `).join('');
+
+        const fieldsGroup = `
+            <div class="form-group">
+                <label>Поля формы:</label>
+                <div id="${blockData.id}_fields" class="fields-list">
+                    ${fieldsHTML}
+                </div>
+                <button class="add-field" onclick="addOrderField('${blockData.id}')">+ Добавить поле</button>
+            </div>
+        `;
+
+        const successMessageGroup = this.generateFormGroup(
+            'Сообщение при успехе (можно использовать переменные):',
+            `<textarea placeholder="Спасибо, {customer_name}! Ваш заказ принят." onchange="updateBlockData('${blockData.id}', 'success_message', this.value)" oninput="updateBlockData('${blockData.id}', 'success_message', this.value)">${blockData.success_message || ''}</textarea>`
+        );
+
+        return header + fieldsGroup + successMessageGroup;
     }
 
     static generateNotificationBlock(blockData) {
@@ -431,7 +491,31 @@ class BlockGenerator {
 
     static generateOrderConfirmBlock(blockData) {
         const header = this.generateBlockHeader('Подтверждение заказа', 'CONFIRM', blockData.id);
-        return header + this.generateFormGroup('Заголовок:', `<input type="text" placeholder="Подтверждение заказа" value="${blockData.title || ''}">`);
+
+        const messageGroup = this.generateFormGroup(
+            'Текст подтверждения (можно использовать переменные):',
+            `<textarea placeholder="Пожалуйста, проверьте ваш заказ:\n\nТовары: {cart_items}\nИтого: {total_price}\n\nВсе верно?" onchange="updateBlockData('${blockData.id}', 'message', this.value)" oninput="updateBlockData('${blockData.id}', 'message', this.value)">${blockData.message || ''}</textarea>`
+        );
+
+        const confirmButtonGroup = this.generateFormGroup(
+            'Текст кнопки подтверждения:',
+            `<input type="text" placeholder="✅ Подтвердить заказ" onchange="updateBlockData('${blockData.id}', 'confirm_button', this.value)" oninput="updateBlockData('${blockData.id}', 'confirm_button', this.value)" value="${blockData.confirm_button || '✅ Подтвердить заказ'}">
+            <small style="color: #666;">Соединение "confirm_order" активируется при нажатии</small>`
+        );
+
+        const editButtonGroup = this.generateFormGroup(
+            'Текст кнопки редактирования:',
+            `<input type="text" placeholder="✏️ Изменить заказ" onchange="updateBlockData('${blockData.id}', 'edit_button', this.value)" oninput="updateBlockData('${blockData.id}', 'edit_button', this.value)" value="${blockData.edit_button || '✏️ Изменить заказ'}">
+            <small style="color: #666;">Соединение "edit_order" активируется при нажатии</small>`
+        );
+
+        const cancelButtonGroup = this.generateFormGroup(
+            'Текст кнопки отмены:',
+            `<input type="text" placeholder="❌ Отменить" onchange="updateBlockData('${blockData.id}', 'cancel_button', this.value)" oninput="updateBlockData('${blockData.id}', 'cancel_button', this.value)" value="${blockData.cancel_button || '❌ Отменить'}">
+            <small style="color: #666;">Соединение "cancel_order" активируется при нажатии</small>`
+        );
+
+        return header + messageGroup + confirmButtonGroup + editButtonGroup + cancelButtonGroup;
     }
 
     static generateChatGptBlock(blockData) {

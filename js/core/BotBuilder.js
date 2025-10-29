@@ -307,8 +307,20 @@ class BotBuilder {
                 blockData.currency = 'RUB';
                 break;
             case 'order_form':
-                blockData.fields = [{ type: 'name', variable: '' }];
+                blockData.fields = [{ type: 'name', variable: 'customer_name' }];
                 blockData.success_message = '';
+                break;
+            case 'database':
+                blockData.operation = 'save';
+                blockData.key = '';
+                blockData.data = '';
+                blockData.result_variable = 'db_result';
+                break;
+            case 'order_confirm':
+                blockData.message = '';
+                blockData.confirm_button = '✅ Подтвердить заказ';
+                blockData.edit_button = '✏️ Изменить заказ';
+                blockData.cancel_button = '❌ Отменить';
                 break;
             case 'chatgpt':
                 blockData.api_key = '';

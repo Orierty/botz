@@ -65,11 +65,7 @@
         <div class="block-type" draggable="true" data-type="cart">
             🛒 Корзина
         </div>
-        
-        <div class="block-type" draggable="true" data-type="payment">
-            💳 Оплата
-        </div>
-        
+
         <div class="block-type" draggable="true" data-type="database">
             🗄️ База данных
         </div>
@@ -99,20 +95,64 @@
 
     <div class="main-area">
         <div class="toolbar collapsible">
-            <button class="btn" onclick="clearCanvas()">🗑️ Очистить</button>
-            <button class="btn btn-undo" onclick="historyManager.undo()" id="undo-btn" disabled title="Отменить (Ctrl+Z / Ctrl+Я)">↶ Отменить</button>
-            <button class="btn btn-redo" onclick="historyManager.redo()" id="redo-btn" disabled title="Повторить (Ctrl+Y / Ctrl+Н)">↷ Повторить</button>
-            <button class="btn btn-secondary" onclick="toggleConnectMode()" id="connect-btn" title="Соединить блоки (ПКМ для отмены)">🔗 Соединить</button>
-            <button class="btn btn-secondary" onclick="toggleBreakMode()" id="break-btn" title="Разорвать соединение (ПКМ для отмены)">✂️ Разорвать</button>
-            <button class="btn btn-secondary" onclick="previewBot()">👁️ Просмотр</button>
-            <button class="btn" onclick="exportBot()">📥 Экспорт Python</button>
-            <button class="btn btn-secondary" onclick="saveToFile()">💾 Сохранить файл</button>
-            <button class="btn btn-secondary" onclick="loadFromFile()">📂 Загрузить файл</button>
-            <button class="btn btn-theme" onclick="toggleTheme()" id="theme-btn" title="Переключить тему">🌙 Тема</button>
-            <div class="toolbar-spacer"></div>
-            <div class="toolbar-right-fixed">
-                <button id="toggle-sidebar-btn" class="btn btn-secondary" onclick="toggleSidebar()" title="Скрыть/показать левую панель">скрыть панель</button>
-                <button id="toggle-toolbar-btn" class="btn btn-secondary" onclick="toggleToolbar()" title="Скрыть/показать тулбар">скрыть тулбар</button>
+            <!-- Левая группа: основные действия -->
+            <div class="toolbar-group toolbar-group-main">
+                <button class="btn btn-icon" onclick="clearCanvas()" title="Очистить canvas">
+                    <span class="icon">🗑️</span>
+                    <span class="btn-text">Очистить</span>
+                </button>
+                <div class="toolbar-divider"></div>
+                <button class="btn btn-icon btn-undo" onclick="historyManager.undo()" id="undo-btn" disabled title="Отменить (Ctrl+Z)">
+                    <span class="icon">↶</span>
+                    <span class="btn-text">Отменить</span>
+                </button>
+                <button class="btn btn-icon btn-redo" onclick="historyManager.redo()" id="redo-btn" disabled title="Повторить (Ctrl+Y)">
+                    <span class="icon">↷</span>
+                    <span class="btn-text">Повторить</span>
+                </button>
+            </div>
+
+            <!-- Центральная группа: инструменты -->
+            <div class="toolbar-group toolbar-group-tools">
+                <button class="btn btn-icon" onclick="toggleConnectMode()" id="connect-btn" title="Соединить блоки">
+                    <span class="icon">🔗</span>
+                    <span class="btn-text">Соединить</span>
+                </button>
+                <button class="btn btn-icon" onclick="toggleBreakMode()" id="break-btn" title="Разорвать соединение">
+                    <span class="icon">✂️</span>
+                    <span class="btn-text">Разорвать</span>
+                </button>
+                <button class="btn btn-icon" onclick="previewBot()" title="Предпросмотр бота">
+                    <span class="icon">👁️</span>
+                    <span class="btn-text">Просмотр</span>
+                </button>
+            </div>
+
+            <!-- Правая группа: файлы и настройки -->
+            <div class="toolbar-group toolbar-group-files">
+                <button class="btn btn-icon" onclick="saveToFile()" title="Сохранить в файл">
+                    <span class="icon">💾</span>
+                    <span class="btn-text">Сохранить</span>
+                </button>
+                <button class="btn btn-icon" onclick="loadFromFile()" title="Загрузить из файла">
+                    <span class="icon">📂</span>
+                    <span class="btn-text">Загрузить</span>
+                </button>
+                <button class="btn btn-icon" onclick="exportBot()" title="Экспорт в Python">
+                    <span class="icon">📥</span>
+                    <span class="btn-text">Экспорт</span>
+                </button>
+                <div class="toolbar-divider"></div>
+                <button class="btn btn-icon btn-theme" onclick="toggleTheme()" id="theme-btn" title="Переключить тему">
+                    <span class="icon">🌙</span>
+                    <span class="btn-text">Тема</span>
+                </button>
+            </div>
+
+            <!-- Кнопки управления панелями -->
+            <div class="toolbar-controls">
+                <button class="btn-control-text" id="toggle-sidebar-btn" onclick="toggleSidebar()" title="Скрыть/показать панель">скрыть панель</button>
+                <button class="btn-control-text" id="toggle-toolbar-btn" onclick="toggleToolbar()" title="Скрыть/показать тулбар">скрыть тулбар</button>
             </div>
         </div>
         

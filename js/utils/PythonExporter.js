@@ -448,28 +448,43 @@ if __name__ == "__main__":
         elif block_type == 'database':
             operation = block.get('operation', 'save')
             key = substitute_variables(block.get('key', ''), user_data[chat_id])
-            data_var = block.get('data', '')
-            result_var = block.get('result_variable', '')
-            
+            data_str = block.get('data', '')
+            result_var = block.get('result_variable', 'db_result')
+
             if operation == 'save':
-                data = user_data[chat_id].get(data_var, '')
-                success = db_operation('save', key, data)
+                # Подставляем переменные в данные
+                data_to_save = substitute_variables(data_str, user_data[chat_id])
+                # Пытаемся распарсить как JSON
+                try:
+                    import json
+                    data_obj = json.loads(data_to_save)
+                    success = db_operation('save', key, data_obj)
+                except:
+                    # Если не JSON, сохраняем как есть
+                    success = db_operation('save', key, data_to_save)
+
                 if result_var:
                     user_data[chat_id][result_var] = success
                 logger.info(f"Сохранено в БД: {key}")
-                
+
             elif operation == 'load':
                 data = db_operation('load', key)
                 if result_var:
                     user_data[chat_id][result_var] = data if data is not None else ''
                 logger.info(f"Загружено из БД: {key}")
-                
+
             elif operation == 'delete':
                 success = db_operation('delete', key)
                 if result_var:
                     user_data[chat_id][result_var] = success
                 logger.info(f"Удалено из БД: {key}")
-            
+
+            elif operation == 'exists':
+                exists = db_operation('exists', key)
+                if result_var:
+                    user_data[chat_id][result_var] = 'true' if exists else 'false'
+                logger.info(f"Проверка существования в БД: {key} = {exists}")
+
             next_block_id = block.get('connections', {}).get('outputs', {}).get('default')
             if next_block_id:
                 await execute_block_by_id(chat_id, state, next_block_id)
@@ -619,22 +634,21 @@ if __name__ == "__main__":
                     await execute_block_by_id(chat_id, state, next_block_id)
         
         elif block_type == 'order_confirm':
-            title = substitute_variables(block.get('title', 'Подтверждение'), user_data[chat_id])
-            template = substitute_variables(block.get('template', 'Заказ готов к подтверждению'), user_data[chat_id])
-            
+            message = substitute_variables(block.get('message', 'Подтвердите заказ'), user_data[chat_id])
+            confirm_btn = block.get('confirm_button', '✅ Подтвердить заказ')
+            edit_btn = block.get('edit_button', '✏️ Изменить заказ')
+            cancel_btn = block.get('cancel_button', '❌ Отменить')
+
             # Создаем кнопки подтверждения
-            buttons = []
-            if block.get('show_confirm', True):
-                buttons.append([InlineKeyboardButton(text="✅ Подтвердить", callback_data="confirm_order")])
-            if block.get('show_edit', True):
-                buttons.append([InlineKeyboardButton(text="✏️ Редактировать", callback_data="edit_order")])
-            if block.get('show_cancel', False):
-                buttons.append([InlineKeyboardButton(text="❌ Отменить", callback_data="cancel_order")])
-            
-            if buttons:
-                keyboard = InlineKeyboardMarkup(inline_keyboard=buttons)
-                await bot.send_message(chat_id, f"{title}\\n\\n{template}", reply_markup=keyboard)
-                # Сохраняем ID блока для callback-маршрутизации
+            buttons = [
+                [InlineKeyboardButton(text=confirm_btn, callback_data=f"{block_id}_confirm_order")],
+                [InlineKeyboardButton(text=edit_btn, callback_data=f"{block_id}_edit_order")],
+                [InlineKeyboardButton(text=cancel_btn, callback_data=f"{block_id}_cancel_order")]
+            ]
+
+            keyboard = InlineKeyboardMarkup(inline_keyboard=buttons)
+            await bot.send_message(chat_id, message, reply_markup=keyboard)
+            # Сохраняем ID блока для callback-маршрутизации
                 user_data[chat_id]['_last_order_confirm_block'] = block_id
             else:
                 await send_message(chat_id, f"{title}\\n\\n{template}")

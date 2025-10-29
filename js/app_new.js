@@ -51,14 +51,22 @@ document.addEventListener('DOMContentLoaded', function() {
         const toolbarBtn = document.getElementById('toggle-toolbar-btn');
         const edgeToolbar = document.getElementById('edge-open-toolbar');
         const edgeToggleSidebar = document.getElementById('edge-toggle-sidebar');
+
         if (sidebar && sidebarCollapsed) {
             sidebar.classList.add('collapsed');
-            if (sidebarBtn) sidebarBtn.textContent = 'показать панель';
+            if (sidebarBtn) {
+                sidebarBtn.textContent = 'показать панель';
+                sidebarBtn.title = 'Показать панель';
+            }
             if (edgeToggleSidebar) edgeToggleSidebar.textContent = 'показать панель';
         }
+
         if (mainArea && toolbarCollapsed) {
             mainArea.classList.add('toolbar-collapsed');
-            if (toolbarBtn) toolbarBtn.textContent = 'показать тулбар';
+            if (toolbarBtn) {
+                toolbarBtn.textContent = 'показать тулбар';
+                toolbarBtn.title = 'Показать тулбар';
+            }
             if (edgeToolbar) edgeToolbar.classList.remove('hidden');
             if (edgeToggleSidebar) edgeToggleSidebar.classList.remove('hidden');
             // edge sidebar button label should reflect current sidebar state
@@ -412,7 +420,13 @@ function toggleSidebar() {
     if (!sidebar) return;
     const collapsed = sidebar.classList.toggle('collapsed');
     try { localStorage.setItem('sidebar_collapsed', collapsed ? '1' : '0'); } catch (e) {}
-    if (btn) btn.textContent = collapsed ? 'показать панель' : 'скрыть панель';
+
+    // Обновляем текст в кнопке
+    if (btn) {
+        btn.textContent = collapsed ? 'показать панель' : 'скрыть панель';
+        btn.title = collapsed ? 'Показать панель' : 'Скрыть панель';
+    }
+
     const edgeToggleSidebar = document.getElementById('edge-toggle-sidebar');
     const mainArea = document.querySelector('.main-area');
     if (edgeToggleSidebar) {
@@ -431,7 +445,13 @@ function toggleToolbar() {
     if (!mainArea) return;
     const collapsed = mainArea.classList.toggle('toolbar-collapsed');
     try { localStorage.setItem('toolbar_collapsed', collapsed ? '1' : '0'); } catch (e) {}
-    if (btn) btn.textContent = collapsed ? 'показать тулбар' : 'скрыть тулбар';
+
+    // Обновляем текст в кнопке
+    if (btn) {
+        btn.textContent = collapsed ? 'показать тулбар' : 'скрыть тулбар';
+        btn.title = collapsed ? 'Показать тулбар' : 'Скрыть тулбар';
+    }
+
     if (edgeBtn) edgeBtn.classList.toggle('hidden', !collapsed);
     if (edgeToggleSidebar) {
         // When toolbar collapses, we also show the sidebar toggle near the edge
